@@ -36,6 +36,8 @@ def main():
 	        	doWork(input_directory + "/" + filename)
 
 	convertFilesToMP3()
+
+	remove_folder(f"{cwd}/separated")
 	#copyBackingTracks()
 
 def doWork(audio_url):
@@ -64,19 +66,22 @@ def doWork(audio_url):
 			Log.i("!!! conversion only works with mp3 and m4a !!!\n")
 			return
 
-	Log.i("... Analyzing")
-	bpm, beat_times = analyzeAudio(audio_url)
+	Log.i(f"... Analyzing {audio_url}")
+	bpms, beat_times = analyzeAudio(audio_url)
 	first_beat_time = beat_times[0]
-	Log.i(f"... found {bpm:.1f} BPM, first beat: {first_beat_time:.4f} secs, beat times count: {len(beat_times)}")
+
+	first_found_bpm = bpms[0]
+
+	Log.i(f"... found {first_found_bpm:.1f} BPM, first beat: {first_beat_time:.4f} secs, beat times count: {len(beat_times)}")
 
 
 	Log.i("... Creating click track")
-	click_file  = f"{output_dir}/{file_name} (click track ~{bpm:.1f} BPM).wav"
+	click_file  = f"{output_dir}/{file_name} (click track ~{first_found_bpm:.1f} BPM).wav"
 	count_in_url = createClickTrack(beat_times, click_file)
 
 	Log.i("... Demucs audio seperation")
 	runDemucs(audio_url, output_dir)
-	demucs_output_dir = f"{output_dir}/htdemucs/{file_name}"
+	demucs_output_dir = f"{cwd}/separated/htdemucs/{file_name}"
 	drum_file = demucs_output_dir + "/drums.wav"
 	vocal_file = demucs_output_dir + "/vocals.wav"
 	other_file = demucs_output_dir + "/other.wav"
@@ -129,9 +134,11 @@ def doWork(audio_url):
 		Log.e(f"Error: missing either '{drum_file}' or '{bass_file}'")
 
 	files_to_add_count_in_to = [audio_url, drum_and_bass_file]
-	count_in_work(audio_url, file_name, bpm, first_beat_time, files_to_add_count_in_to)
+	count_in_work(audio_url, file_name, first_found_bpm, first_beat_time, files_to_add_count_in_to)
 
-	pre_append_silence(f"{output_dir}/{file_name} (bass + drums) (count in).wav", f"{output_dir}/{file_name} (bass + drums) (count in) (pre-silence).wav")
+	bass_drum_count_in = f"{output_dir}/{file_name} (bass + drums) (count in).wav"
+	if file_exists(bass_drum_count_in):
+		pre_append_silence(bass_drum_count_in, f"{output_dir}/{file_name} (bass + drums) (count in) (pre-silence).wav")
 
 	Log.i("... Cleaning")
 	for file in [drum_file, bass_file, other_file, vocal_file]:
@@ -139,7 +146,7 @@ def doWork(audio_url):
 			ext = file[file.index(".")+1:]
 			copy_file(file, f"{output_dir}/{file_name} ({getFileName(file)}).{ext}")
 
-	remove_folder(f"{output_dir}/htdemucs")
+	
 	Log.i("------------------------------\n")
 
 def count_in_work(audio_url, file_name, bpm, first_beat_time, files_to_add_count_in_to):
@@ -161,6 +168,7 @@ def count_in_work(audio_url, file_name, bpm, first_beat_time, files_to_add_count
 			Log.i(f"... Pitch shifting {config_file.pitch_shift} semi-tones")
 			output_url = file.replace(".wav", f" (shifted {config_file.pitch_shift} ST).wav") 
 			pitch_shift_wav(file, output_url, config_file.pitch_shift)
+			pre_append_silence(output_url, output_url.replace(".wav", " (pre-silence).wav"))
 			file = output_url
 		
 		if config_file.first_beat_time < count_in_duration:
@@ -229,8 +237,8 @@ def createCountInTrackOld(config_file, output_file):
 def pre_append_silence(source_path, destination_path):
 	insert_silence_to_beginning(source_path, destination_path, 1.5)
 
-def runDemucs(source_path, destination_path):
-	p = subprocess.Popen('demucs -o "'+destination_path+'" -d cpu "'+source_path +'"', stdout=subprocess.PIPE, shell=True)
+def runDemucs(source_path, destination_path):	
+	p = subprocess.Popen('python3 -m demucs.separate "' + source_path + '"', stdout=subprocess.PIPE, shell=True )
 	Log.i(p.communicate())
 	Log.i("Finished demucs")
 

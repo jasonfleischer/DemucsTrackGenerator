@@ -40,10 +40,21 @@ def remove_folder(folder_path):
     except Exception as e:
         print(f"Error: {e}")
 
+def copy_folder(source_folder, destination_folder):
+    try:
+        if not os.path.exists(source_folder):
+            print(f"Source folder '{source_folder}' does not exist.")
+            return
+        shutil.copytree(source_folder, destination_folder)
+        print(f"Folder copied from '{source_folder}' to '{destination_folder}'.")
+    except FileExistsError:
+        print(f"Destination folder '{destination_folder}' already exists.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
 def copy_file_to_folder(source_path, destination_folder):
     ext = source_path[source_path.index(".")+1:]
     copy_file(source_path, f"{destination_folder}/{getFileName(source_path)}.{ext}")
-
 
 def copy_file(source_path, destination_path):
     try:

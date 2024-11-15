@@ -60,10 +60,10 @@ def insert_silence_to_beginning(input_path, output_path, silence_duration_second
 	new_audio.export(output_path, format="wav")
 
 def pitch_shift_wav(input_file, output_file, semitones):
-    y, sr = librosa.load(input_file, sr=None)
-    pitch_shift_factor = 2 ** (semitones / 12.0)
-    y_shifted = librosa.effects.pitch_shift(y, sr=sr, n_steps=semitones)
-    sf.write(output_file, y_shifted, sr)
+	y, sr = librosa.load(input_file, sr=None)
+	pitch_shift_factor = 2 ** (semitones / 12.0)
+	y_shifted = librosa.effects.pitch_shift(y, sr=sr, n_steps=semitones)
+	sf.write(output_file, y_shifted, sr)
 
 def createCountInTrack(config_file, output_file):
 	bpm = config_file.bpm
