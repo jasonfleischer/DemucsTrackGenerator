@@ -36,6 +36,7 @@ def main():
 	        	doWork(input_directory + "/" + filename)
 
 	convertFilesToMP3()
+	removeAllWAVFiles()
 
 	remove_folder(f"{cwd}/separated")
 	#copyBackingTracks()
@@ -253,6 +254,14 @@ def convertFilesToMP3():
 					Log.w(f"!!! Skipping {output_path} : already exists")
 				else:
 					convertWavToMP3(file_path, output_path)
+
+def removeAllWAVFiles():
+	for root, dirs, files in os.walk(output_folder):
+		Log.i(f"... Removing WAV files in: {root}")
+		for file in files:
+			if file.endswith(".wav"):
+				file_path = os.path.join(root, file)
+				remove_file(file_path)
 
 def copyBackingTracks():
 	backing_track_output_folder = f"{cwd}/output - backing tracks"
