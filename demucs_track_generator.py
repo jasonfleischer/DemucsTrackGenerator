@@ -122,6 +122,9 @@ def doWork(audio_url):
 		else:
 			Log.e("!!! nothing to merge !!!")
 
+
+	pitchShift(file_name, [drum_file, vocal_file, other_file, bass_file])
+
 	#if os.path.exists(drum_file) and os.path.exists(vocal_file):
 	#	Log.i("... Merging vocal and drum files")
 	#	output_file = output_dir + "/" + file_name + " (drums + vocal).wav"
@@ -188,6 +191,25 @@ def count_in_work(audio_url, file_name, bpm, first_beat_time, files_to_add_count
 			remove_file(new_count_in_file)
 
 	remove_file(count_in_audio_file)
+
+def pitchShift(file_name, file_paths):
+
+	json_data = get_file_contents(f'input/{file_name}.json')
+	config_file = ConfigFile(-1, 4, -1, 1, 0)
+	
+	if json_data is not None:
+		config_file.from_json(json_data)
+
+	if config_file.pitch_shift == 0:
+		return
+
+	for file in file_paths:
+		pitch_shift = config_file.pitch_shift
+		Log.i(f"... Pitch shifting '{file}'' {pitch_shift} semi-tones")
+		instrument_type = file[file.rfind('/') + 1: file.rfind('.')]
+		output_url = f"{output_folder}/{file_name}/{file_name} ({instrument_type}) (shifted {pitch_shift} ST).wav" 
+		pitch_shift_wav(file, output_url, pitch_shift)
+
 
 def createClickTrack(beat_times, output_file):
 	bg = BeepGenerator()
